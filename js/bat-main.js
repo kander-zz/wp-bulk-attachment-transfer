@@ -87,6 +87,8 @@ jQuery(document).ready(function ($) {
                 return;
             }
 
+            progressLabel.text(BulkAttXfer.importing);
+
             // Init progressbar based on the amount of files we've just determined.
             progressBar.progressbar({
                 value: 0,

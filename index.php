@@ -30,7 +30,6 @@ class BulkAttachmentTransfer
     {
         add_action( 'admin_enqueue_scripts', array( $object, 'registerJavascript' ) );
         add_action( 'admin_menu', array( $object, 'registerPage' ) );
-        add_action( 'wp_ajax_bat_initFail', array( $object, 'initFail' ) );
         add_action( 'wp_ajax_bat_upload', array( $object, 'processUpload' ) );
         $plugin = plugin_basename( __FILE__ );
         add_filter( "plugin_action_links_" . $plugin, array( $object, 'addPluginLink') );
@@ -78,13 +77,8 @@ class BulkAttachmentTransfer
             'noAttachments' => __( 'We parsed the Wordpress Export file, but didn\'t find any attachments.', 'bulk-att-xfer'),
             'parsing'       => __( 'Parsing the file.', 'bulk-att-xfer' ),
             'importing'     => __( 'Importing file ', 'bulk-att-xfer' ),
-            'imported'      => __( 'Imported file ', 'bulk-att-xfer' ),
-            'progress'      => __( 'Overall progress: ', 'bulk-att-xfer' ),
-            'retrying'      => __( 'An error occured. In 5 seconds, retrying file ', 'bulk-att-xfer' ),
             'done'          => __( 'All done!', 'bulk-att-xfer' ),
-            'ajaxFail'      => __( 'There was an error connecting to the server.', 'bulk-att-xfer' ),
-            'fatalUpload'   => __( 'There was a fatal error. Check the last entry in the error log below.',
-                'bulk-att-xfer' )
+            'fatalUpload'   => __( 'There was a fatal error. Check the last entry in the error log below.', 'bulk-att-xfer' )
         ) );
 
         wp_localize_script( 'bat-main', 'aiSecurity', array(
@@ -97,12 +91,6 @@ class BulkAttachmentTransfer
         wp_enqueue_style( 'bulk-att-xfer', plugins_url( 'inc/style.css', __FILE__ ) );
 
         include( __DIR__ . '/templates/page.php' );
-    }
-
-    public function initFail()
-    {
-        include( __DIR__ . '/templates/initFail.php' );
-        die();
     }
 
     private function extractParametersFromRequest( $post )
