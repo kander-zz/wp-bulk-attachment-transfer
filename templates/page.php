@@ -33,8 +33,14 @@
         </p>
 
         <p>
-            <input type="number" name="threads" id="threads" value="5">&nbsp;
-            <?php _e( 'Number of simultaneous uploads', 'bulk-att-xfer' ); ?>
+            <!-- max of 16 threads due to limits imposed by browsers. Above 8 no real performance gain was observed. -->
+            <input type="number" name="threads" id="threads" value="5" min="1" max="16">&nbsp;
+            <?php _e( 'Number of simultaneous uploads; if you set this to 1 you can also specify a delay between each transfer', 'bulk-att-xfer' ); ?>
+        </p>
+
+        <p id="delayWrapper">
+            <input type="number" name="delay" id="delay" value="0" min="0" max="60">&nbsp;
+            <?php _e( 'Delay between uploads in seconds', 'bulk-att-xfer' ); ?>
         </p>
 
         <p><?php submit_button( _x( 'Upload', 'A button which will submit the attachment for processing when clicked.',

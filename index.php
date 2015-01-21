@@ -81,9 +81,12 @@ class BulkAttachmentTransfer
             'fatalUpload'   => __( 'There was a fatal error. Check the last entry in the error log below.', 'bulk-att-xfer' )
         ) );
 
-        wp_localize_script( 'bat-main', 'aiSecurity', array(
+        wp_localize_script( 'bat-main', 'BulkAttXferConfig', array(
             'nonce' => wp_create_nonce( 'import-attachment-plugin' ),
-            'urls' => array( 'siteurl' => get_option('siteurl') )
+            'urls' => array(
+                'siteurl' => get_option('siteurl'),
+                'worker' => plugins_url( 'js/worker.js', __FILE__ ),
+            )
         ) );
 
         wp_enqueue_script( 'bat-main' );

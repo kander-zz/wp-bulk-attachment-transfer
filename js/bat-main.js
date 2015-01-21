@@ -1,3 +1,14 @@
+// IE < 9 fix for passing arbitrary arguments into setTimeout and setInterval.
+/*@cc_on
+ // conditional IE < 9 only fix
+ @if (@_jscript_version <= 6)
+ (function(f){
+ window.setTimeout =f(window.setTimeout);
+ window.setInterval =f(window.setInterval);
+ })(function(f){return function(c,t){var a=[].slice.call(arguments,2);return f(function(){c.apply(this,a)},t)}});
+ @end
+ @*/
+
 jQuery(document).ready(function ($) {
 
     $(document).tooltip();
@@ -12,7 +23,22 @@ jQuery(document).ready(function ($) {
         return;
     }
 
-    $(document).on('click', '#upload', function () {
+    // If only one thread is selected, introduce the delay option.
+    $('#threads').on('change', function () {
+        if ($(this).val() == 1) {
+            $('#delayWrapper').show();
+        } else {
+            $('#delayWrapper').hide();
+            $('#delay').val(0);
+        }
+    }).trigger('change');
+
+    ('#delay').on('change', function() {
+        if($(this).val() > 10) {
+            alert("You are setting a delay of over 10 seconds. That means this will take some time. Grab a coffee!");
+        }
+    });
+    $('#upload').on('click', function () {
 
         var file = $('#file').get(0).files[0],
             reader = new FileReader(),
@@ -21,7 +47,8 @@ jQuery(document).ready(function ($) {
             author2 = $("select[name='user']").val(),
             progressBar = $("#bulk-att-xfer-progressbar"),
             progressLabel = $("#bulk-att-xfer-progresslabel"),
-            threads = $('#threads').val();
+            threads = $('#threads').val(),
+            delay = $('#delay').val();
 
         // Clean out the Output div.
         divOutput.empty();
@@ -54,7 +81,7 @@ jQuery(document).ready(function ($) {
                 $this = $(this);
 
                 var attachmentInfo = {};
-                attachmentInfo._ajax_nonce = aiSecurity.nonce;
+                attachmentInfo._ajax_nonce = BulkAttXferConfig.nonce;
                 attachmentInfo.url = $this.find('wp\\:attachment_url, attachment_url').text();
                 attachmentInfo.title = $this.find('title').text();
                 attachmentInfo.link = $this.find('link').text();
@@ -104,15 +131,16 @@ jQuery(document).ready(function ($) {
 
 
             $(queue).each(function () {
-                var url = aiSecurity.urls.siteurl + ajaxurl;
+                var url = BulkAttXferConfig.urls.siteurl + ajaxurl;
 
                 var params = {
                     ajaxurl: url,
-                    attachment: this
+                    attachment: this,
+                    delay: delay
                 };
 
                 pool
-                    .run(import_attachment, params)
+                    .run(BulkAttXferConfig.urls.worker, params)
                     .done(function (result) {
 
                         console.log({
@@ -128,43 +156,18 @@ jQuery(document).ready(function ($) {
                         progressBar.progressbar("value", progressBar.progressbar("value") + 1);
                         try {
                             var response = JSON.parse(result.response);
-                        } catch(err) {
+                        } catch (err) {
                             $('<div class="error">Unknown server response</div>').prependTo(divOutput);
                         }
 
-                        $('<div class="' + response.type + '">' + response.message + '</div>').prependTo(divOutput);
+                        if(!response.type == undefined) {
+                            $('<div class="error">' + response + '</div>').prependTo(divOutput);
+                        } else {
+                            $('<div class="' + response.type + '">' + response.message + '</div>').prependTo(divOutput);
+                        }
 
                     });
             });
         }
     });
-
-
-    // This code runs as a worker.
-    // Might want to move it into a separate script to reduce overhead introduced by ThreadPool, which
-    // throws this into a data-url to turn it into a worker.
-    function import_attachment(params, done) {
-
-        // console.log(params);
-
-        var url = params.ajaxurl;
-        var data = new FormData();
-        data.append('action', 'bat_upload');
-        for (var i in params.attachment) {
-            data.append(i, params.attachment[i])
-        }
-
-        // Unfortunately, we can not use jQuery in a Web Worker.
-        // jQuery is built around the DOM, and loading it fails in a worker context.
-        // Falling back to 'classic' XHR instead.
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', url);
-        xhr.onload = function () {
-            // do something to response
-            done({
-                response: this.responseText
-            });
-        };
-        xhr.send(data);
-    }
 });
